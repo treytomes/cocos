@@ -13,3 +13,5 @@ menuentry "myos" {
 }
 EOF
 grub-mkrescue -o myos.iso isodir
+
+sudo cp myos.iso /media/host/temp
