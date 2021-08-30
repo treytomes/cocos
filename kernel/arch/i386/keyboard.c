@@ -4,10 +4,11 @@
 
 #include <stdio.h>
 
-#include "keyboard.h"
-#include "irq.h"
-#include "system.h"
-#include "timer.h"
+#include <kernel/keyboard.h>
+#include <kernel/irq.h>
+#include <kernel/system.h>
+#include <kernel/timer.h>
+#include <kernel/tty.h>
 
 uint8_t keyboard_layout_us[2][128] = {
     {
@@ -36,7 +37,26 @@ struct Keyboard keyboard;
 // bad hack! for a better RNG
 static bool seeded = false;
 
+uint8_t cursor_color = 0;
+
+void draw_cursor() {
+    terminal_putentryat(219, cursor_color, terminal_get_cursor_column(), terminal_get_cursor_row());
+    cursor_color++;
+    if (cursor_color > 15) {
+        cursor_color = 0;
+    }
+}
+
+void erase_cursor() {
+    uint8_t color = terminal_get_cursor_color();
+    terminal_putentryat(' ', color, terminal_get_cursor_column(), terminal_get_cursor_row());
+}
+
 uint8_t keyboard_getchar() {
+    while (keyboard.next_char == 0) {
+        draw_cursor();
+    }
+    erase_cursor();
     uint8_t ch = keyboard.next_char;
     keyboard.next_char = 0;
     return ch;

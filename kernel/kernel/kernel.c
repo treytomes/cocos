@@ -5,53 +5,77 @@
 #include <string.h>
 #include <kernel/tty.h>
 
-#include "keyboard.h"
-#include "timer.h"
-#include "idt.h"
-#include "isr.h"
-#include "irq.h"
-#include "fpu.h"
+#include <kernel/keyboard.h>
+#include <kernel/timer.h>
+#include <kernel/idt.h>
+#include <kernel/isr.h>
+#include <kernel/irq.h>
+#include <kernel/fpu.h>
 
 __attribute__ ((constructor)) void kernel_premain(void) {
-    terminal_initialize();
-	printf("The terminal is initialized.\r\n");
+    terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
+	//printf("The terminal is initialized.\r\n");
 
     // Make a blocky cursor.
-    cursor_enable(0, 15);
+    //cursor_enable(0, 15);
+    cursor_disable();
 
     idt_init();
-    printf("IDF is initialized.\r\n");
+    //printf("IDF is initialized.\r\n");
 
     isr_init();
-    printf("ISR is initialized.\r\n");
+    //printf("ISR is initialized.\r\n");
 
     fpu_init();
-    printf("FPU is initialized.\r\n");
+    //printf("FPU is initialized.\r\n");
 
     irq_init();
-    printf("IRQ is initialized.\r\n");
+    //printf("IRQ is initialized.\r\n");
 
     timer_init();
-    printf("Timer is initialized.\r\n");
+    //printf("Timer is initialized.\r\n");
 
     keyboard_init();
-    printf("Keyboard is initialized.\r\n");
+    //printf("Keyboard is initialized.\r\n");
+
+	printf("X64 OVER-EXTENDED COLOR BASIC 0.1A\r\n");
+    printf("COPR. 2021 BY TREY TOMES\r\n");
+    printf("\r\n");
 }
 
 void kernel_main(void) {
-	printf("Hello, kernel World!\r\n");
+    size_t line_length = VGA_WIDTH;
+    char line[VGA_WIDTH];
+    char *linePtr = (char *)line;
+
+    printf("OK\r\n");
 
     while (true) {
-        uint8_t ch = keyboard_getchar();
-        if (ch != 0) {
-            printf("%c", ch);
-            /*
+        size_t len = getline(&linePtr, &line_length);
+
+        if (len > 0) {
             char text[32] = {0};
-            int n = ch;
-            itoa(n, text, 32);
-            printf("%s %c\r\n", text, ch);
-            */
+            itoa(len, text, 32);
+            printf("You said: %s (Length: %s)\r\n", line, text);
+            printf("OK\r\n");
         }
+        
+        /*
+        if (ch == '\n') {
+            printf("\r\n");
+        } else if (ch == '\b') {
+            // Backspace is handled in tty.
+            printf("%c", ch);
+        } else {
+            printf("%c", ch);
+        }
+        */
+        /*
+        char text[32] = {0};
+        int n = ch;
+        itoa(n, text, 32);
+        printf("%s %c\r\n", text, ch);
+        */
     }
 
 	/*

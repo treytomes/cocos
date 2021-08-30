@@ -1,8 +1,8 @@
 //#include <stdio.h>
 
-#include "timer.h"
-#include "isr.h"
-#include "irq.h"
+#include <kernel/timer.h>
+#include <kernel/isr.h>
+#include <kernel/irq.h>
 
 #define PIT_A 0x40
 #define PIT_B 0x41

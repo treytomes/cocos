@@ -4,6 +4,7 @@
 //#include <sys/cdefs.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
 // fixed width integer types

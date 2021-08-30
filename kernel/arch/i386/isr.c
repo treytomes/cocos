@@ -1,6 +1,6 @@
-#include "isr.h"
-#include "idt.h"
-#include "system.h"
+#include <kernel/isr.h>
+#include <kernel/idt.h>
+#include <kernel/system.h>
 
 #define NUM_ISRS 48
 

@@ -1,4 +1,4 @@
-#include "fpu.h"
+#include <kernel/fpu.h>
 
 void fpu_init() {
     size_t t;

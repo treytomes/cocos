@@ -5,8 +5,8 @@
 
 #include <kernel/tty.h>
 
-#include "util.h"
-#include "vga.h"
+#include <kernel/util.h>
+#include <kernel/vga.h>
 
 static uint16_t* const VGA_MEMORY = (uint16_t*)0xB8000;
 
@@ -53,10 +53,10 @@ uint16_t cursor_get_position(void) {
 
 // Terminal
 
-void terminal_initialize(void) {
+void terminal_clear(uint8_t color) {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+	terminal_color = color; //vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 	terminal_buffer = VGA_MEMORY;
 
 	uint16_t fillValue = vga_entry(' ', terminal_color);
@@ -75,6 +75,18 @@ void terminal_setcolor(uint8_t color) {
 uint16_t terminal_getentryat(size_t x, size_t y) {
     const size_t index = y * VGA_WIDTH + x;
     return terminal_buffer[index];
+}
+
+size_t terminal_get_cursor_row() {
+	return terminal_row;
+}
+
+size_t terminal_get_cursor_column() {
+	return terminal_column;
+}
+
+uint8_t terminal_get_cursor_color() {
+	return terminal_color;
 }
 
 void terminal_putentryat(unsigned char ch, uint8_t color, size_t x, size_t y) {
@@ -119,6 +131,11 @@ void terminal_putchar(char c) {
 		carriage_return();
 	} else if (uc == '\n') {
 		line_feed();
+	} else if (uc == '\b') {
+		if (terminal_column > 0) {
+			terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+			terminal_column--;
+		}
 	} else {
 		terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
 		terminal_column++;

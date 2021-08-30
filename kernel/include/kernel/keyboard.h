@@ -1,6 +1,7 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // TODO: some of this it 100% wrong lmao

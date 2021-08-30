@@ -1,4 +1,4 @@
-#include "idt.h"
+#include <kernel/idt.h>
 #include <string.h>
 
 #define PACKED __attribute__((packed))
