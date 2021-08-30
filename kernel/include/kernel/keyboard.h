@@ -68,7 +68,7 @@
 #define KEY_CHAR(_s) __extension__({\
         __typeof__(_s) __s = (_s);\
         KEY_SCANCODE(__s) < 0x80 ?\
-            keyboard_layout_us[KEY_MOD(keyboard.mods, KEY_MOD_SHIFT) ? 1 : 0][KEY_SCANCODE(__s)] :\
+            keyboard_layout_us[(keyboard.capsLock || KEY_MOD(keyboard.mods, KEY_MOD_SHIFT)) ? 1 : 0][KEY_SCANCODE(__s)] :\
             0;\
     })
 
@@ -77,6 +77,9 @@ struct Keyboard {
     bool keys[128];
     bool chars[128];
 
+    bool capsLock;
+    bool scrollLock;
+    bool numLock;
     uint8_t next_char;
 };
 

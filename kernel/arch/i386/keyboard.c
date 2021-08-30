@@ -64,35 +64,45 @@ uint8_t keyboard_getchar() {
 
 uint8_t keyboard_read() {
     uint16_t scancode = (uint16_t) inportb(0x60);
+    uint8_t rawScancode = KEY_SCANCODE(scancode);
+    bool isPressed = KEY_IS_PRESS(scancode);
 
     if (!seeded) {
-        seed(((uint32_t) scancode) * 17 + timer_get());
+        seed(((uint32_t)scancode) * 17 + timer_get());
         seeded = true;
     }
 
-    if (KEY_SCANCODE(scancode) == KEY_LALT || KEY_SCANCODE(scancode) == KEY_RALT) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_ALT), KEY_IS_PRESS(scancode));
-    } else if (
-        KEY_SCANCODE(scancode) == KEY_LCTRL || KEY_SCANCODE(scancode) == KEY_RCTRL) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_CTRL), KEY_IS_PRESS(scancode));
-    } else if (
-        KEY_SCANCODE(scancode) == KEY_LSHIFT || KEY_SCANCODE(scancode) == KEY_RSHIFT) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_SHIFT), KEY_IS_PRESS(scancode));
-    } else if (KEY_SCANCODE(scancode) == KEY_CAPS_LOCK) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_CAPS_LOCK), KEY_IS_PRESS(scancode));
-    } else if (KEY_SCANCODE(scancode) == KEY_NUM_LOCK) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_NUM_LOCK), KEY_IS_PRESS(scancode));
-    } else if (KEY_SCANCODE(scancode) == KEY_SCROLL_LOCK) {
-        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_SCROLL_LOCK), KEY_IS_PRESS(scancode));
+    if (rawScancode == KEY_LALT || rawScancode == KEY_RALT) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_ALT), isPressed);
+    } else if (rawScancode == KEY_LCTRL || rawScancode == KEY_RCTRL) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_CTRL), isPressed);
+    } else if (rawScancode == KEY_LSHIFT || rawScancode == KEY_RSHIFT) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_SHIFT), isPressed);
+    } else if (rawScancode == KEY_CAPS_LOCK) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_CAPS_LOCK), isPressed);
+    } else if (rawScancode == KEY_NUM_LOCK) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_NUM_LOCK), isPressed);
+    } else if (rawScancode == KEY_SCROLL_LOCK) {
+        keyboard.mods = BIT_SET(keyboard.mods, HIBIT(KEY_MOD_SCROLL_LOCK), isPressed);
     }
 
-    uint8_t next_scancode = (uint8_t) KEY_SCANCODE(scancode);
+    if (isPressed) {
+        if (rawScancode == KEY_CAPS_LOCK) {
+            keyboard.capsLock = !keyboard.capsLock;
+        } else if (rawScancode == KEY_SCROLL_LOCK) {
+            keyboard.scrollLock = !keyboard.scrollLock;
+        } else if (rawScancode == KEY_NUM_LOCK) {
+            keyboard.numLock = !keyboard.numLock;
+        }
+    }
+
+    uint8_t next_scancode = rawScancode;
     uint8_t next_char = KEY_CHAR(scancode);
 
-    keyboard.keys[next_scancode] = KEY_IS_PRESS(scancode);
-    keyboard.chars[next_char] = KEY_IS_PRESS(scancode);
+    keyboard.keys[next_scancode] = isPressed;
+    keyboard.chars[next_char] = isPressed;
 
-    if (KEY_IS_PRESS(scancode) && (next_char != 0)) {
+    if (isPressed && (next_char != 0)) {
         keyboard.next_char = next_char;
     }
 
@@ -104,5 +114,8 @@ static void keyboard_handler(struct Registers *regs) {
 }
 
 void keyboard_init() {
+    keyboard.capsLock = false;
+    keyboard.scrollLock = false;
+    keyboard.numLock = false;
     irq_install(1, keyboard_handler);
 }
