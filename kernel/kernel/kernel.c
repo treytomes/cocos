@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <kernel/tty.h>
 
@@ -38,20 +39,19 @@ __attribute__ ((constructor)) void kernel_premain(void) {
     keyboard_init();
     //printf("Keyboard is initialized.\r\n");
 
-	printf("X64 OVER-EXTENDED COLOR BASIC 0.1A\r\n");
+	printf("X64 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
     printf("COPR. 2021 BY TREY TOMES\r\n");
     printf("\r\n");
 }
 
 void kernel_main(void) {
     size_t line_length = VGA_WIDTH;
-    char line[VGA_WIDTH];
-    char *linePtr = (char *)line;
+    char* line = (char*)malloc(VGA_WIDTH);
 
     printf("OK\r\n");
 
     while (true) {
-        size_t len = getline(&linePtr, &line_length);
+        size_t len = getline(&line, &line_length);
 
         if (len > 0) {
             char text[32] = {0};

@@ -2,6 +2,7 @@
 #define _STDLIB_H 1
 
 #include <sys/cdefs.h>
+#include <malloc.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -188,3 +188,5 @@ idt:
 
 .size _start, . - _start
 
+.global boot_end
+boot_end:
