@@ -29,11 +29,13 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+ctype/isalpha.o \
+ctype/isdigit.o \
+ctype/isspace.o \
 stdio/getc.o \
 stdio/getchar.o \
 stdio/gets.o \
 stdio/getline.o \
-stdio/isdigit.o \
 stdio/printf.o \
 stdio/putchar.o \
 stdio/puts.o \
@@ -45,10 +47,15 @@ string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
 string/memset.o \
+string/strchr.o \
 string/strcmp.o \
+string/strcspn.o \
 string/strlcat.o \
 string/strlcpy.o \
 string/strlen.o \
+string/strspn.o \
+string/strstr.o \
+string/strtok.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

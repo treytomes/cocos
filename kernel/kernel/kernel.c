@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -44,22 +45,95 @@ __attribute__ ((constructor)) void kernel_premain(void) {
     printf("\r\n");
 }
 
-bool starts_with(const char* text, const char* substr) {
-    int textLen = strlen(text);
-    int substrLen = strlen(substr);
-    if (textLen < substrLen) {
-        //printf("***");
-        return false;
-    }
+inline bool starts_with(const char* haystack, const char* needle) {
+    return strstr(haystack, needle) == haystack;
+}
 
-    for (int n = 0; n < substrLen; n++) {
-        if (text[n] != substr[n]) {
-            //printf("!!!");
+bool isinteger(const char* text) {
+    for (; *text != 0; text++) {
+        if (!isdigit(*text)) {
             return false;
         }
     }
-    //printf(":-)");
     return true;
+}
+
+/**
+ * An identifier starts with a letter, and is followed by letters or numbers.
+ */
+bool isident(const char* text) {
+    if (!isalpha(*text)) {
+        return false;
+    }
+    for (; *text != 0; text++) {
+        if (!isalpha(text) && !isdigit(text)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+char* trim_left(char* text) {
+    while (isspace(*text)) {
+        text++;
+    }
+    return text;
+}
+
+char* trim_right(char* text) {
+    int n = strlen(text) - 1;
+    while (isspace(text[n])) {
+        text[n] = 0;
+    }
+    return text;
+}
+
+void parse_cls(char* line) {
+    uint8_t color = terminal_get_cursor_color();
+    int bgColor = color >> 4;
+    int fgColor = color & 0x0F;
+
+    char* token;
+
+    // Read the command text.
+    token = strtok(line, " \t"); // There could be whitespace after the "cls".
+    char* cmd = token;
+    if (cmd == NULL) {
+        printf("?FC ERROR\r\n");
+        return;
+    }
+    
+    // Read the background color.
+    token = strtok(NULL, ","); // There may or may not be a comma.
+    token = trim_left(token);
+    token = trim_right(token);
+    if (!isinteger(token)) {
+        printf("?SN ERROR\r\n");
+        return;
+    }
+
+    bgColor = atoi(token);
+    if ((bgColor < 0) || (bgColor > 15)) {
+        printf("?FC ERROR\r\n");
+        return;
+    }
+
+    // Read the foreground color.
+    token = strtok(NULL, ",");
+    token = trim_left(token);
+    token = trim_right(token);
+    if (!isinteger(token)) {
+        printf("?SN ERROR\r\n");
+        return;
+    }
+
+    fgColor = atoi(token);
+    if ((fgColor < 0) || (fgColor > 15)) {
+        printf("?FC ERROR\r\n");
+        return;
+    }
+
+    terminal_clear(vga_entry_color(fgColor, bgColor));
 }
 
 void kernel_main(void) {
@@ -73,9 +147,7 @@ void kernel_main(void) {
 
         if (len > 0) {
             if (starts_with(line, "cls")) {
-                // The color should start around the 4th character.
-                int value = atoi((char *)(line + 4));
-                terminal_clear((uint8_t)value);
+                parse_cls(line);
             } else {
                 char text[32] = {0};
                 itoa(len, text, 32);

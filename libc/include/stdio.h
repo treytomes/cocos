@@ -14,7 +14,6 @@ int getc(void);
 int getchar(void);
 size_t gets(char** lineptr, size_t* n);
 size_t getline(char** lineptr, size_t* n);
-int isdigit(int c);
 int printf(const char* __restrict, ...);
 int putchar(int);
 int puts(const char*);
