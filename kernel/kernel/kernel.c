@@ -39,9 +39,27 @@ __attribute__ ((constructor)) void kernel_premain(void) {
     keyboard_init();
     //printf("Keyboard is initialized.\r\n");
 
-	printf("X64 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
+	printf("X32 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
     printf("COPR. 2021 BY TREY TOMES\r\n");
     printf("\r\n");
+}
+
+bool starts_with(const char* text, const char* substr) {
+    int textLen = strlen(text);
+    int substrLen = strlen(substr);
+    if (textLen < substrLen) {
+        //printf("***");
+        return false;
+    }
+
+    for (int n = 0; n < substrLen; n++) {
+        if (text[n] != substr[n]) {
+            //printf("!!!");
+            return false;
+        }
+    }
+    //printf(":-)");
+    return true;
 }
 
 void kernel_main(void) {
@@ -54,9 +72,15 @@ void kernel_main(void) {
         size_t len = getline(&line, &line_length);
 
         if (len > 0) {
-            char text[32] = {0};
-            itoa(len, text, 32);
-            printf("You said: %s (Length: %s)\r\n", line, text);
+            if (starts_with(line, "cls")) {
+                // The color should start around the 4th character.
+                int value = atoi((char *)(line + 4));
+                terminal_clear((uint8_t)value);
+            } else {
+                char text[32] = {0};
+                itoa(len, text, 32);
+                printf("You said: %s (Length: %s)\r\n", line, text);
+            }
             printf("OK\r\n");
         }
         

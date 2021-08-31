@@ -16,9 +16,6 @@ static uint8_t terminal_color;
 static uint16_t* terminal_buffer;
 
 // Cursor
-void cursor_enable(uint8_t cursor_start, uint8_t cursor_end);
-void cursor_disable();
-void cursor_move(int x, int y);
 
 void cursor_enable(uint8_t cursor_start, uint8_t cursor_end) {
 	outportb(0x3D4, 0x0A);
@@ -94,6 +91,7 @@ void terminal_putentryat(unsigned char ch, uint8_t color, size_t x, size_t y) {
 	terminal_buffer[index] = vga_entry(ch, color);
 }
 
+/*
 void terminal_scroll(int line) {
 	for (uint8_t* loop = (uint8_t*)VGA_MEMORY + line * (VGA_WIDTH * 2); loop < (uint8_t*)VGA_MEMORY + VGA_WIDTH * 2; loop++) {
 		uint8_t value = *loop;
@@ -108,6 +106,13 @@ void terminal_delete_last_line() {
 		*ptr = 0;
 	}
 }
+*/
+
+void scroll_up() {
+    memcpy(terminal_buffer + 0, terminal_buffer + VGA_WIDTH, (VGA_WIDTH * VGA_HEIGHT - VGA_WIDTH) * 2);
+    uint16_t space_entry = vga_entry(' ', terminal_color);
+    memset(terminal_buffer + VGA_WIDTH * VGA_HEIGHT - VGA_WIDTH, space_entry, VGA_WIDTH * 2);
+}
 
 void carriage_return() {
 	terminal_column = 0;
@@ -116,10 +121,13 @@ void carriage_return() {
 void line_feed() {
 	terminal_row++;
 	if (terminal_row == VGA_HEIGHT) {
+		/*
 		for (size_t line = 1; line <= VGA_HEIGHT - 1; line++) {
 			terminal_scroll(line);
 		}
 		terminal_delete_last_line();
+		*/
+		scroll_up();
 		terminal_row = VGA_HEIGHT - 1;
 	}
 }

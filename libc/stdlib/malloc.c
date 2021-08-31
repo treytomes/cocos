@@ -26,6 +26,7 @@ static union header *first = NULL;
 /* Register name faking - works in collusion with the linker.  */
 register char * stack_ptr asm ("sp");
 
+// Source: https://github.com/32bitmicro/newlib-nano-1.0/blob/master/newlib/libc/sys/arm/syscalls.c
 void* sbrk(int incr) {
     extern char end asm ("boot_end");	/* Defined by the linker.  */
     static char* heap_end;
