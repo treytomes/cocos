@@ -120,17 +120,19 @@ void parse_cls(char* line) {
 
     // Read the foreground color.
     token = strtok(NULL, ",");
-    token = trim_left(token);
-    token = trim_right(token);
-    if (!isinteger(token)) {
-        printf("?SN ERROR\r\n");
-        return;
-    }
+    if (token != NULL) { // The foreground parameter is optional.
+        token = trim_left(token);
+        token = trim_right(token);
+        if (!isinteger(token)) {
+            printf("?SN ERROR\r\n");
+            return;
+        }
 
-    fgColor = atoi(token);
-    if ((fgColor < 0) || (fgColor > 15)) {
-        printf("?FC ERROR\r\n");
-        return;
+        fgColor = atoi(token);
+        if ((fgColor < 0) || (fgColor > 15)) {
+            printf("?FC ERROR\r\n");
+            return;
+        }
     }
 
     terminal_clear(vga_entry_color(fgColor, bgColor));
