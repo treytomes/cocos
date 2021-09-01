@@ -119,7 +119,7 @@ void parse_cls(char* line) {
     }
 
     // Read the foreground color.
-    token = strtok(NULL, ",");
+    token = strtok(NULL, "");
     if (token != NULL) { // The foreground parameter is optional.
         token = trim_left(token);
         token = trim_right(token);
@@ -151,9 +151,9 @@ void kernel_main(void) {
             if (starts_with(line, "cls")) {
                 parse_cls(line);
             } else {
-                char text[32] = {0};
-                itoa(len, text, 32);
-                printf("You said: %s (Length: %s)\r\n", line, text);
+                //char text[32] = {0};
+                //itoa(len, text, 32);
+                printf("You said: %s (Length: %d)\r\n", line, len);
             }
             printf("OK\r\n");
         }
