@@ -105,22 +105,7 @@ void parse_cls(char* line) {
     
     // Read the background color.
     token = strtok(NULL, ","); // There may or may not be a comma.
-    token = trim_left(token);
-    token = trim_right(token);
-    if (!isinteger(token)) {
-        printf("?SN ERROR\r\n");
-        return;
-    }
-
-    bgColor = atoi(token);
-    if ((bgColor < 0) || (bgColor > 15)) {
-        printf("?FC ERROR\r\n");
-        return;
-    }
-
-    // Read the foreground color.
-    token = strtok(NULL, "");
-    if (token != NULL) { // The foreground parameter is optional.
+    if (token != NULL) {
         token = trim_left(token);
         token = trim_right(token);
         if (!isinteger(token)) {
@@ -128,10 +113,27 @@ void parse_cls(char* line) {
             return;
         }
 
-        fgColor = atoi(token);
-        if ((fgColor < 0) || (fgColor > 15)) {
+        bgColor = atoi(token);
+        if ((bgColor < 0) || (bgColor > 15)) {
             printf("?FC ERROR\r\n");
             return;
+        }
+
+        // Read the foreground color.
+        token = strtok(NULL, "");
+        if (token != NULL) { // The foreground parameter is optional.
+            token = trim_left(token);
+            token = trim_right(token);
+            if (!isinteger(token)) {
+                printf("?SN ERROR\r\n");
+                return;
+            }
+
+            fgColor = atoi(token);
+            if ((fgColor < 0) || (fgColor > 15)) {
+                printf("?FC ERROR\r\n");
+                return;
+            }
         }
     }
 
