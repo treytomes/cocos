@@ -1,3 +1,5 @@
+// If I manage to make the disk reader work, mention Salvador Garcia and Bill Pierce in my thanks.
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -7,12 +9,106 @@
 #include <string.h>
 #include <kernel/tty.h>
 
+#include <kernel/cmos.h>
 #include <kernel/keyboard.h>
 #include <kernel/timer.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/irq.h>
 #include <kernel/fpu.h>
+
+#include <kernel/parser.h>
+
+bool parse_cls(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "cls")) {
+        uint8_t color = terminal_get_cursor_color();
+        int bgColor = color >> 4;
+        int fgColor = color & 0x0F;
+
+        skip_whitespace(linePtr);
+        if (read_integer(linePtr, &bgColor)) {
+            //printf("Found background color: %d\r\n", bgColor);
+        } else {
+            //printf("No background color specified.\r\n");
+        }
+
+        skip_whitespace(linePtr);
+        if (match_char(linePtr, ',')) {
+            //printf("Found comma.\r\n");
+
+            skip_whitespace(linePtr);
+            if (read_integer(linePtr, &fgColor)) {
+                //printf("Found foreground color: %d\r\n", fgColor);
+
+                skip_whitespace(linePtr);
+                if (!is_at_eol(linePtr)) {
+                    // Expected EOL here.
+                    printf("?SN ERROR\r\n");
+                    return false;
+                }
+            } else {
+                // If you put the comma, you gotta put the number.
+                printf("?SN ERROR\r\n");
+                return false;
+            }
+        } else if (!is_at_eol(linePtr)) {
+            //printf("Remainder: '%s'\r\n", *linePtr);
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        terminal_clear(vga_entry_color(fgColor, bgColor));
+        return true;
+    }
+    return false;
+}
+
+const char* drive_get_description(uint8_t driveDesc) {
+    switch (driveDesc) {
+        case 0:
+            return "NOT FOUND";
+        case 1:
+            return "360 KB 5.25 DRIVE";
+        case 2:
+            return "1.2 MB 5.25 DRIVE";
+        case 3:
+            return "720 KB 3.5 DRIVE";
+        case 4:
+            return "1.44 MB 3.5 DRIVE";
+        case 5:
+            return "2.88 MB 3.5 DRIVE";
+        default:
+            return "DRIVE TYPE UNKNOWN";
+    }
+}
+
+bool parse_drives(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "drives")) {
+        skip_whitespace(linePtr);
+        if (!is_at_eol(linePtr)) {
+            // Expected EOL here.
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        // Read the number of drives from CMOS register 0x10.
+        cmos_select_register(0x10);
+        
+        uint8_t driveDesc = cmos_read();
+        uint8_t drive0Desc = driveDesc >> 4;
+        uint8_t drive1Desc = driveDesc & 0x0F;
+        printf("DRIVE 0: %s\r\n", drive_get_description(drive0Desc));
+        printf("DRIVE 1: %s\r\n", drive_get_description(drive1Desc));
+        return true;
+    }
+    return false;
+}
 
 __attribute__ ((constructor)) void kernel_premain(void) {
     terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
@@ -40,104 +136,11 @@ __attribute__ ((constructor)) void kernel_premain(void) {
     keyboard_init();
     //printf("Keyboard is initialized.\r\n");
 
+    //floppy_init();
+
 	printf("X32 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
     printf("COPR. 2021 BY TREY TOMES\r\n");
     printf("\r\n");
-}
-
-inline bool starts_with(const char* haystack, const char* needle) {
-    return strstr(haystack, needle) == haystack;
-}
-
-bool isinteger(const char* text) {
-    for (; *text != 0; text++) {
-        if (!isdigit(*text)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
- * An identifier starts with a letter, and is followed by letters or numbers.
- */
-bool isident(const char* text) {
-    if (!isalpha(*text)) {
-        return false;
-    }
-    for (; *text != 0; text++) {
-        if (!isalpha(text) && !isdigit(text)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-char* trim_left(char* text) {
-    while (isspace(*text)) {
-        text++;
-    }
-    return text;
-}
-
-char* trim_right(char* text) {
-    int n = strlen(text) - 1;
-    while (isspace(text[n])) {
-        text[n] = 0;
-    }
-    return text;
-}
-
-void parse_cls(char* line) {
-    uint8_t color = terminal_get_cursor_color();
-    int bgColor = color >> 4;
-    int fgColor = color & 0x0F;
-
-    char* token;
-
-    // Read the command text.
-    token = strtok(line, " \t"); // There could be whitespace after the "cls".
-    char* cmd = token;
-    if (cmd == NULL) {
-        printf("?FC ERROR\r\n");
-        return;
-    }
-    
-    // Read the background color.
-    token = strtok(NULL, ","); // There may or may not be a comma.
-    if (token != NULL) {
-        token = trim_left(token);
-        token = trim_right(token);
-        if (!isinteger(token)) {
-            printf("?SN ERROR\r\n");
-            return;
-        }
-
-        bgColor = atoi(token);
-        if ((bgColor < 0) || (bgColor > 15)) {
-            printf("?FC ERROR\r\n");
-            return;
-        }
-
-        // Read the foreground color.
-        token = strtok(NULL, "");
-        if (token != NULL) { // The foreground parameter is optional.
-            token = trim_left(token);
-            token = trim_right(token);
-            if (!isinteger(token)) {
-                printf("?SN ERROR\r\n");
-                return;
-            }
-
-            fgColor = atoi(token);
-            if ((fgColor < 0) || (fgColor > 15)) {
-                printf("?FC ERROR\r\n");
-                return;
-            }
-        }
-    }
-
-    terminal_clear(vga_entry_color(fgColor, bgColor));
 }
 
 void kernel_main(void) {
@@ -152,6 +155,8 @@ void kernel_main(void) {
         if (len > 0) {
             if (starts_with(line, "cls")) {
                 parse_cls(line);
+            } else if (starts_with(line, "drives")) {
+                parse_drives(line);
             } else {
                 //char text[32] = {0};
                 //itoa(len, text, 32);
@@ -159,53 +164,5 @@ void kernel_main(void) {
             }
             printf("OK\r\n");
         }
-        
-        /*
-        if (ch == '\n') {
-            printf("\r\n");
-        } else if (ch == '\b') {
-            // Backspace is handled in tty.
-            printf("%c", ch);
-        } else {
-            printf("%c", ch);
-        }
-        */
-        /*
-        char text[32] = {0};
-        int n = ch;
-        itoa(n, text, 32);
-        printf("%s %c\r\n", text, ch);
-        */
     }
-
-	/*
-	terminal_writestring("It lives!\r\n");
-    terminal_writestring("But does it respect line break?\n\n");
-    terminal_writestring("\r...does it?\n");
-    terminal_writestring("And where are we now?\r\n");
-
-    uint8_t fgColor = VGA_COLOR_LIGHT_GREY;
-    for (size_t row = 0; row < VGA_HEIGHT; row++) {
-        for (size_t column = 0; column < VGA_WIDTH; column++) {
-            uint16_t value = terminal_getentryat(column, row);
-            uint8_t ch = value & 0xFF; // Lop off the color bits.
-            uint8_t bgColor = (row ^ column) & 0x04;
-            uint8_t color = vga_entry_color((vga_color)fgColor, (vga_color)bgColor);
-            terminal_putentryat(ch, color, column, row);
-        }
-    }
-	*/
-
-    // Scroll Test
-    /*
-    uint8_t ch = 'a';
-    while (true) {
-        terminal_putchar(ch);
-        ch++;
-        if (ch > 'z') {
-            ch = 'a';
-        }
-        line_feed();
-    }
-    */
 }
