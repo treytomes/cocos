@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdarg.h>
@@ -57,7 +58,9 @@ int printf(const char* restrict format, ...) {
 			if (!print(&c, sizeof(c)))
 				return -1;
 			written++;
-		} else if ((*format == 'd') || (*(format + 1) == 'd') || (*(format + 2) == 'd')) {
+		} else if ((*format == 'd') ||
+				   ((*(format + 1) == 'd') && isdigit(*format)) ||
+				   ((*(format + 2) == 'd') && isdigit(*(format + 1)))) {
 			char padding = ' ';
 			char width = 0;
 
