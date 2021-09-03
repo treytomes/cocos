@@ -10,6 +10,7 @@
 #include <kernel/tty.h>
 
 #include <kernel/cmos.h>
+#include <kernel/datetime.h>
 #include <kernel/keyboard.h>
 #include <kernel/timer.h>
 #include <kernel/idt.h>
@@ -57,6 +58,11 @@ bool parse_cls(char* line) {
         } else if (!is_at_eol(linePtr)) {
             //printf("Remainder: '%s'\r\n", *linePtr);
             printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        if ((bgColor < 0) || (bgColor > 15) || (fgColor < 0) || (fgColor > 15)) {
+            printf("?FC ERROR\r\n");
             return false;
         }
 
@@ -110,6 +116,37 @@ bool parse_drives(char* line) {
     return false;
 }
 
+bool parse_date(char* line) {
+    char** linePtr = &line;
+    bool displayTime = false;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "date")) {
+        skip_whitespace(linePtr);
+
+        if (match_char(linePtr, '-') && match_ident(linePtr, "t")) {
+            // Display the time as well.
+            displayTime = true;
+        }
+        skip_whitespace(linePtr);
+
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+        
+        datetime_read_rtc();
+        printf("%04d-%02d-%02d", datetime_year, datetime_month, datetime_day);
+
+        if (displayTime) {
+            printf(" %02d:%02d:%02d", datetime_hour, datetime_minute, datetime_second);
+        }
+        printf("\r\n");
+        return true;
+    }
+    return false;
+}
+
 __attribute__ ((constructor)) void kernel_premain(void) {
     terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
 	//printf("The terminal is initialized.\r\n");
@@ -155,6 +192,8 @@ void kernel_main(void) {
         if (len > 0) {
             if (starts_with(line, "cls")) {
                 parse_cls(line);
+            } else if (starts_with(line, "date")) {
+                parse_date(line);
             } else if (starts_with(line, "drives")) {
                 parse_drives(line);
             } else {
