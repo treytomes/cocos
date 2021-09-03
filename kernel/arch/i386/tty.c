@@ -15,6 +15,8 @@ static size_t terminal_column;
 static uint8_t terminal_color;
 static uint16_t* terminal_buffer;
 
+static bool terminal_dump_raw = false;
+
 // Cursor
 
 void cursor_enable(uint8_t cursor_start, uint8_t cursor_end) {
@@ -135,6 +137,16 @@ void line_feed() {
 void terminal_putchar(char c) {
 	unsigned char uc = c;
 
+	if (terminal_dump_raw) {
+		terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
+		terminal_column++;
+		if (terminal_column == VGA_WIDTH) {
+			carriage_return();
+			line_feed();
+		}
+		return;
+	}
+
 	if (uc == '\r') {
 		carriage_return();
 	} else if (uc == '\n') {
@@ -163,4 +175,8 @@ void terminal_write(const char* data, size_t size) {
 
 void terminal_writestring(const char* data) {
 	terminal_write(data, strlen(data));
+}
+
+void terminal_set_raw(bool value) {
+	terminal_dump_raw = value;
 }

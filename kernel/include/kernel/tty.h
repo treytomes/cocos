@@ -1,6 +1,7 @@
 #ifndef _KERNEL_TTY_H
 #define _KERNEL_TTY_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/vga.h>
@@ -22,5 +23,11 @@ size_t terminal_get_cursor_row();
 size_t terminal_get_cursor_column();
 uint8_t terminal_get_cursor_color();
 void terminal_putentryat(unsigned char ch, uint8_t color, size_t x, size_t y);
+
+/**
+ * Set a flag to write characters directly to the screen
+ * without processing special codes.
+ */
+void terminal_set_raw(bool value);
 
 #endif
