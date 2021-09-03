@@ -32,4 +32,7 @@ char *strstr(const char *haystack, const char *needle) {
             haystack++;
         }
     }
+
+    // TODO: Is this right?
+    return NULL;
 }

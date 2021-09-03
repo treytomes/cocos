@@ -15,6 +15,7 @@ static bool print(const char* data, size_t length) {
 	return true;
 }
 
+// TODO: You can only pad out to 9 characters.
 int printf(const char* restrict format, ...) {
 	const int ITOA_SIZE = 16;
 	va_list parameters;
@@ -48,7 +49,7 @@ int printf(const char* restrict format, ...) {
 
 		if (*format == 'c') {
 			format++;
-			char c = (char) va_arg(parameters, int /* char promotes to int */);
+			char c = (char)va_arg(parameters, int); // char promotes to int
 			if (!maxrem) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
@@ -56,9 +57,22 @@ int printf(const char* restrict format, ...) {
 			if (!print(&c, sizeof(c)))
 				return -1;
 			written++;
-		} else if (*format == 'd') {
-			format++;
-			int n = (char)va_arg(parameters, int);
+		} else if ((*format == 'd') || (*(format + 1) == 'd') || (*(format + 2) == 'd')) {
+			char padding = ' ';
+			char width = 0;
+
+			if (*(format + 2) == 'd') {
+				padding = *format;
+				format++;
+				width = (*format) - '0';
+				format++;
+			} else if (*(format + 1) == 'd') {
+				width = (*format) - '0';
+				format++;
+			}
+
+			format++; // skip the 'd'
+			int n = (int)va_arg(parameters, int);
 			if (!maxrem) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
@@ -66,10 +80,23 @@ int printf(const char* restrict format, ...) {
 			char text[ITOA_SIZE];
 			itoa(n, text, ITOA_SIZE);
 			int len = strlen(text);
+
+			if (width - len > 0) {
+				int remainder = width - len;
+				for (int n = 0; n < remainder; n++) {
+					putchar(padding);
+				}
+			}
+
 			if (!print(text, len)) {
 				return -1;
 			}
-			written += len;
+
+			if (len > width) {
+				written += len;
+			} else {
+				written += width;
+			}
 		} else if (*format == 's') {
 			format++;
 			const char* str = va_arg(parameters, const char*);
