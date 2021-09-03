@@ -50,3 +50,8 @@ void timer_init() {
     timer_set(TIMER_TPS);
     irq_install(0, timer_handler);
 }
+
+void timer_sleep(uint64_t ticks) {
+    uint64_t start = timer_get();
+    while (timer_get() - start <= ticks);
+}
