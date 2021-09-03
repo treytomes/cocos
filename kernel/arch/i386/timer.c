@@ -37,6 +37,7 @@ uint64_t timer_get() {
 
 static void timer_handler(struct Registers *regs) {
     state.ticks++;
+    // A second occurs every 18 ticks...?
     //printf("*");
 }
 
