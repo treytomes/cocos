@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <kernel/vga.h>
 
-static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 25;
-
 void cursor_enable(uint8_t cursor_start, uint8_t cursor_end);
 void cursor_disable();
 void cursor_set_position(int x, int y);

@@ -150,7 +150,6 @@ bool parse_date(char* line) {
 
 bool parse_beep(char* line) {
     char** linePtr = &line;
-    bool displayTime = false;
     
     skip_whitespace(linePtr);
     if (match_ident(linePtr, "beep")) {
@@ -170,6 +169,81 @@ bool parse_beep(char* line) {
     return false;
 }
 
+bool parse_sound(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "sound")) {
+        int frequency;
+        int duration;
+
+        skip_whitespace(linePtr);
+        if (!read_integer(linePtr, &frequency)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        skip_whitespace(linePtr);
+        if (!match_char(linePtr, ',')) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        skip_whitespace(linePtr);
+        if (!read_integer(linePtr, &duration)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        skip_whitespace(linePtr);
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        speaker_play(frequency);
+        timer_sleep(duration);
+        speaker_pause();
+        return true;
+    }
+    return false;
+}
+
+bool parse_width(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "width")) {
+        int width;
+
+        skip_whitespace(linePtr);
+        if (!read_integer(linePtr, &width)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        if ((width != 40) && (width != 80)) {
+            printf("?FC ERROR\r\n");
+            return false;
+        }
+
+        skip_whitespace(linePtr);
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        if (width == 40) {
+            vga_set_mode_text_40x25();
+        } else if (width == 80) {
+            vga_set_mode_text_80x25();
+        }
+        terminal_clear(terminal_get_cursor_color());
+
+        return true;
+    }
+    return false;
+}
 __attribute__ ((constructor)) void kernel_premain(void) {
     terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
 	//printf("The terminal is initialized.\r\n");
@@ -198,14 +272,16 @@ __attribute__ ((constructor)) void kernel_premain(void) {
 
     //floppy_init();
 
+    vga_set_mode_text_40x25();
+    
 	printf("X32 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
     printf("COPR. 2021 BY TREY TOMES\r\n");
     printf("\r\n");
 }
 
 void kernel_main(void) {
-    size_t line_length = VGA_WIDTH;
-    char* line = (char*)malloc(VGA_WIDTH);
+    size_t line_length = vga_width;
+    char* line = (char*)malloc(vga_width);
 
     printf("OK\r\n");
 
@@ -221,6 +297,10 @@ void kernel_main(void) {
                 parse_date(line);
             } else if (starts_with(line, "drives")) {
                 parse_drives(line);
+            } else if (starts_with(line, "sound")) {
+                parse_sound(line);
+            } else if (starts_with(line, "width")) {
+                parse_width(line);
             } else {
                 //char text[32] = {0};
                 //itoa(len, text, 32);
