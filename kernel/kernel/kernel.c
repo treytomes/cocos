@@ -17,6 +17,7 @@
 #include <kernel/isr.h>
 #include <kernel/irq.h>
 #include <kernel/fpu.h>
+#include <kernel/speaker.h>
 
 #include <kernel/parser.h>
 
@@ -147,6 +148,28 @@ bool parse_date(char* line) {
     return false;
 }
 
+bool parse_beep(char* line) {
+    char** linePtr = &line;
+    bool displayTime = false;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "beep")) {
+        skip_whitespace(linePtr);
+
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+            
+        speaker_play(1000);
+        timer_sleep(10);
+        speaker_pause();
+        
+        return true;
+    }
+    return false;
+}
+
 __attribute__ ((constructor)) void kernel_premain(void) {
     terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
 	//printf("The terminal is initialized.\r\n");
@@ -190,7 +213,9 @@ void kernel_main(void) {
         size_t len = getline(&line, &line_length);
 
         if (len > 0) {
-            if (starts_with(line, "cls")) {
+            if (starts_with(line, "beep")) {
+                parse_beep(line);
+            } if (starts_with(line, "cls")) {
                 parse_cls(line);
             } else if (starts_with(line, "date")) {
                 parse_date(line);
