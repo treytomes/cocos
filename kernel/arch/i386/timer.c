@@ -1,8 +1,11 @@
-//#include <stdio.h>
+#include <stdio.h>
 
 #include <kernel/timer.h>
 #include <kernel/isr.h>
 #include <kernel/irq.h>
+
+// Number chosen to be integer divisor of PIC frequency.
+#define TIMER_TPS 363
 
 #define PIT_A 0x40
 #define PIT_B 0x41
@@ -12,7 +15,7 @@
 #define PIT_MASK 0xFF
 #define PIT_SET 0x36
 
-#define PIT_HZ 1193181
+#define PIT_HZ 1193181 // or is it 1193180?
 #define DIV_OF_FREQ(_f) (PIT_HZ / (_f))
 #define FREQ_OF_DIV(_d) (PIT_HZ / (_d))
 #define REAL_FREQ_OF_FREQ(_f) (FREQ_OF_DIV(DIV_OF_FREQ((_f))))
@@ -20,8 +23,15 @@
 static struct {
     uint64_t frequency;
     uint64_t divisor;
-    uint64_t ticks;
+    volatile uint64_t ticks;
 } state;
+
+void timer_sleep(uint64_t ticks) {
+    uint64_t start = timer_get();
+    while (timer_get() - start < ticks) {
+        __asm__ __volatile__ ("sti//hlt//cli");
+    }
+}
 
 static void timer_set(int hz) {
     outportb(PIT_CONTROL, PIT_SET);
@@ -49,9 +59,4 @@ void timer_init() {
     //timer_set(state.divisor);
     timer_set(TIMER_TPS);
     irq_install(0, timer_handler);
-}
-
-void timer_sleep(uint64_t ticks) {
-    uint64_t start = timer_get();
-    while (timer_get() - start <= ticks);
 }
