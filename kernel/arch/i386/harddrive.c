@@ -103,3 +103,19 @@ uint8_t* harddrive_load_sector(uint32_t sector) {
 
 	return data;
 }
+
+const char* harddrive_devtype_describe(uint8_t type) {
+    switch (type) {
+        case ATADEV_PATAPI:
+            return "PATAPI";
+        case ATADEV_SATAPI:
+            return "SATAPI";
+        case ATADEV_PATA:
+            return "PATA";
+        case ATADEV_SATA:
+            return "SATA";
+        case ATADEV_UNKNOWN:
+        default:
+			return "UNKNOWN";
+    }
+}

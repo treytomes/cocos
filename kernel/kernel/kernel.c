@@ -112,8 +112,16 @@ bool parse_drives(char* line) {
         uint8_t driveDesc = cmos_read();
         uint8_t drive0Desc = driveDesc >> 4;
         uint8_t drive1Desc = driveDesc & 0x0F;
-        printf("DRIVE 0: %s\r\n", drive_get_description(drive0Desc));
-        printf("DRIVE 1: %s\r\n", drive_get_description(drive1Desc));
+        printf("DRIVE 0: FLOPPY, %s\r\n", drive_get_description(drive0Desc));
+        printf("DRIVE 1: FLOPPY, %s\r\n", drive_get_description(drive1Desc));
+
+        printf("DRIVE 2: PRIMARY HD, ");
+        uint8_t type = harddrive_detect_devtype(0, 0x1F0, 0x3F6);
+        printf("%s\r\n", harddrive_devtype_describe(type));
+        printf("DRIVE 3: SECONDARY HD, ");
+        type = harddrive_detect_devtype(1, 0x1F0, 0x3F6);
+        printf("%s\r\n", harddrive_devtype_describe(type));
+
         return true;
     }
     return false;
@@ -398,54 +406,22 @@ __attribute__ ((constructor)) void kernel_premain(void) {
 
     vga_set_mode_text_40x25();
     
-	printf("X32 OVER-EXTENDED DISK COLOR BASIC 0.1.2A\r\n");
-    printf("COPR. 2021 BY TREY TOMES\r\n");
+	printf("X32 OVER-EXTENDED DISK COLOR BASIC\r\n");
+    printf("0.1.2A, COPYRIGHT 2021 BY TREY TOMES\r\n");
     printf("\r\n");
 }
 
 void kernel_main(void) {
-    printf("PRIMARY HD: ");
-    uint8_t type = harddrive_detect_devtype(0, 0x1F0, 0x3F6);
-    switch (type) {
-        case ATADEV_PATAPI:
-            printf("PATAPI");
-            break;
-        case ATADEV_SATAPI:
-            printf("SATAPI");
-            break;
-        case ATADEV_PATA:
-            printf("PATA");
-            break;
-        case ATADEV_SATA:
-            printf("SATA");
-            break;
-        case ATADEV_UNKNOWN:
-        default:
-            printf("UNKNOWN");
-            break;
+    /*
+    printf("===BEGIN TEST===\r\n");
+    char testText[32];
+    for (int n = 30; n < 46; n++) {
+        itoa(n, testText, 16);
+        printf("%s %d | ", testText, atoi(testText, 16));
     }
     printf("\r\n");
-    printf("SECONDARY HD: ");
-    type = harddrive_detect_devtype(1, 0x1F0, 0x3F6);
-    switch (type) {
-        case ATADEV_PATAPI:
-            printf("PATAPI");
-            break;
-        case ATADEV_SATAPI:
-            printf("SATAPI");
-            break;
-        case ATADEV_PATA:
-            printf("PATA");
-            break;
-        case ATADEV_SATA:
-            printf("SATA");
-            break;
-        case ATADEV_UNKNOWN:
-        default:
-            printf("UNKNOWN");
-            break;
-    }
-    printf("\r\n");
+    printf("===END TEST===\r\n");
+    */
 
     size_t line_length = vga_width;
     char* line = (char*)malloc(vga_width);
