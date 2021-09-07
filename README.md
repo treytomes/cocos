@@ -6,14 +6,28 @@ Color Computer OS
 I'm setting off to answer the question:
 What if the RSDOS operating system on the Color Computer 3 had been written targeting an 8086 instead of a 6809?
 
+# Running
+
+Runs best in QEMU now, as VirtualBox doesn't fully emulate the PC Speaker.
+
+Create a hard drive image: `C:\Program Files\qemu\qemu-img.exe create cocos_hd.img 10M`
+
+Run with this command-line: `"C:\Program Files\qemu\qemu-system-x86_64.exe" -boot d -cdrom c:\temp\cocos.iso -soundhw pcspk -drive file=cocos_hd.img,format=raw`
+
+You could also attach a DSK file as a harddrive image: `"C:\Program Files\qemu\qemu-system-x86_64.exe" -boot d -cdrom c:\temp\cocos.iso -soundhw pcspk -drive file=C:\temp\cocos\cocodump.dsk,format=raw`
+
 # Upcoming Tasks
+* Detect hard drives.
+* Read/write hard drive sectors.
 * Update the keyboard lock LEDs as needed.
-* Implement malloc.
-* Get the terminal scrolling while respecting cursor color.
 
 # Done (recently)
 * Get a simple REPL running.
 * Implement the libc keyboard reading functions.
+* Implement malloc.
+* Get the terminal scrolling while respecting cursor color.
+* Gain control over the VGA text mode size.
+* Implement SOUND and BEEP.
 
 # Log
 

@@ -13,11 +13,13 @@
 #include <kernel/datetime.h>
 #include <kernel/keyboard.h>
 #include <kernel/timer.h>
+#include <kernel/harddrive.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/irq.h>
 #include <kernel/fpu.h>
 #include <kernel/speaker.h>
+#include <kernel/util.h>
 
 #include <kernel/parser.h>
 
@@ -209,6 +211,127 @@ bool parse_sound(char* line) {
     return false;
 }
 
+
+#define REG_CYL_LO 4
+#define REG_CYL_HI 5
+#define REG_DEVSEL 6
+void hd_read_test(uint32_t LBA) {
+    uint8_t slavebit = 0;
+    uint8_t sectorCount = 1;
+    outportb(0x1F6, 0xE0 | (slavebit << 4) | ((LBA >> 24) & 0x0F));
+    outportb(0x1F1, 0x00);
+    outportb(0x1F2, sectorCount);
+    outportb(0x1F3, (uint8_t)(LBA & 0xFF));
+    outportb(0x1F4, (uint8_t)((LBA >> 8) & 0xFF));
+    outportb(0x1F5, (uint8_t)((LBA >> 16) & 0xFF));
+    outportb(0x1F7, 0x20);
+
+    while ((inportb(0x1F7) & 0x8) == 0) {
+        // Wait until bit 3 is set?
+    }
+
+    for (int n = 0; n < 256; n++) {
+        uint16_t value = inportw(0x1F0);
+        printf("%c%c", value & 0xFF, (value >> 8));
+        //if ((n % 20) == 0) {
+        //    printf("\r\n");
+        //}
+    }
+}
+
+bool parse_loadm(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "loadm")) {
+        int sector;
+
+        skip_whitespace(linePtr);
+        if (!read_integer(linePtr, &sector)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        skip_whitespace(linePtr);
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        hd_read_test(sector);
+
+        return true;
+    }
+    return false;
+}
+
+bool parse_dir(char* line) {
+    char** linePtr = &line;
+    
+    skip_whitespace(linePtr);
+    if (match_ident(linePtr, "dir")) {
+        skip_whitespace(linePtr);
+        if (!is_at_eol(linePtr)) {
+            printf("?SN ERROR\r\n");
+            return false;
+        }
+
+        uint8_t* data = harddrive_load_sector(154);
+        int n = 0;
+        while (true) {
+            if ((data[n] == 255) || (n >= 512)) {
+                break;
+            }
+            
+            // Print the filename.
+            for (int m = 0; m < 8; m++) {
+                printf("%c", data[n + m]);
+            }
+            n += 8;
+
+            printf(" ");
+
+            // Print the extension.
+            for (int m = 0; m < 3; m++) {
+                printf("%c", data[n + m]);
+            }
+            n += 3;
+
+            printf(" ");
+
+            // Print the file type.
+            printf("%c", data[n] + '0');
+            n++;
+
+            printf(" ");
+
+            // Print the format type.
+            printf("%c", (data[n] == 0) ? 'B' : 'A');
+            n++;
+
+            printf(" ");
+
+            // Print the first granule location.
+            printf("%d", data[n]);
+            n++;
+
+            printf(" ");
+
+            // Print the last bytes size.
+            int lastBytes = data[n] + (data[n + 1] << 8);
+            printf("%d\r\n", lastBytes);
+            n++;
+
+            // Skip the final 16 bytes;
+            n += 17;
+        }
+        free(data);
+
+        return true;
+    }
+    return false;
+}
+
 bool parse_width(char* line) {
     char** linePtr = &line;
     
@@ -244,6 +367,7 @@ bool parse_width(char* line) {
     }
     return false;
 }
+
 __attribute__ ((constructor)) void kernel_premain(void) {
     terminal_clear(vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN));
 	//printf("The terminal is initialized.\r\n");
@@ -274,12 +398,55 @@ __attribute__ ((constructor)) void kernel_premain(void) {
 
     vga_set_mode_text_40x25();
     
-	printf("X32 OVER-EXTENDED COLOR BASIC 0.1.1A\r\n");
+	printf("X32 OVER-EXTENDED DISK COLOR BASIC 0.1.2A\r\n");
     printf("COPR. 2021 BY TREY TOMES\r\n");
     printf("\r\n");
 }
 
 void kernel_main(void) {
+    printf("PRIMARY HD: ");
+    uint8_t type = harddrive_detect_devtype(0, 0x1F0, 0x3F6);
+    switch (type) {
+        case ATADEV_PATAPI:
+            printf("PATAPI");
+            break;
+        case ATADEV_SATAPI:
+            printf("SATAPI");
+            break;
+        case ATADEV_PATA:
+            printf("PATA");
+            break;
+        case ATADEV_SATA:
+            printf("SATA");
+            break;
+        case ATADEV_UNKNOWN:
+        default:
+            printf("UNKNOWN");
+            break;
+    }
+    printf("\r\n");
+    printf("SECONDARY HD: ");
+    type = harddrive_detect_devtype(1, 0x1F0, 0x3F6);
+    switch (type) {
+        case ATADEV_PATAPI:
+            printf("PATAPI");
+            break;
+        case ATADEV_SATAPI:
+            printf("SATAPI");
+            break;
+        case ATADEV_PATA:
+            printf("PATA");
+            break;
+        case ATADEV_SATA:
+            printf("SATA");
+            break;
+        case ATADEV_UNKNOWN:
+        default:
+            printf("UNKNOWN");
+            break;
+    }
+    printf("\r\n");
+
     size_t line_length = vga_width;
     char* line = (char*)malloc(vga_width);
 
@@ -295,8 +462,12 @@ void kernel_main(void) {
                 parse_cls(line);
             } else if (starts_with(line, "date")) {
                 parse_date(line);
+            } else if (starts_with(line, "dir")) {
+                parse_dir(line);
             } else if (starts_with(line, "drives")) {
                 parse_drives(line);
+            } else if (starts_with(line, "loadm")) {
+                parse_loadm(line);
             } else if (starts_with(line, "sound")) {
                 parse_sound(line);
             } else if (starts_with(line, "width")) {

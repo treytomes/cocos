@@ -71,13 +71,13 @@ typedef u8 bool;
 #define CLI() asm ("cli")
 #define STI() asm ("sti")
 
-static inline uint16_t inports(uint16_t port) {
+static inline uint16_t inportw(uint16_t port) {
     uint16_t r;
     asm("inw %1, %0" : "=a" (r) : "dN" (port));
     return r;
 }
 
-static inline void outports(uint16_t port, uint16_t data) {
+static inline void outportw(uint16_t port, uint16_t data) {
     asm("outw %1, %0" : : "dN" (port), "a" (data));
 }
 
