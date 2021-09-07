@@ -412,17 +412,6 @@ __attribute__ ((constructor)) void kernel_premain(void) {
 }
 
 void kernel_main(void) {
-    /*
-    printf("===BEGIN TEST===\r\n");
-    char testText[32];
-    for (int n = 30; n < 46; n++) {
-        itoa(n, testText, 16);
-        printf("%s %d | ", testText, atoi(testText, 16));
-    }
-    printf("\r\n");
-    printf("===END TEST===\r\n");
-    */
-
     size_t line_length = vga_width;
     char* line = (char*)malloc(vga_width);
 

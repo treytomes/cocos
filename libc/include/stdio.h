@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-int atoi(const char* str);
 int getc(void);
 int getchar(void);
 size_t gets(char** lineptr, size_t* n);

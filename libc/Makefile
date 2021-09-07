@@ -32,6 +32,8 @@ $(ARCH_FREEOBJS) \
 ctype/isalpha.o \
 ctype/isdigit.o \
 ctype/isspace.o \
+ctype/tolower.o \
+ctype/toupper.o \
 stdio/getc.o \
 stdio/getchar.o \
 stdio/gets.o \
@@ -53,9 +55,11 @@ string/strcspn.o \
 string/strlcat.o \
 string/strlcpy.o \
 string/strlen.o \
+string/strlwr.o \
 string/strspn.o \
 string/strstr.o \
 string/strtok.o \
+string/strupr.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

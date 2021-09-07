@@ -4,23 +4,17 @@
 
 // This isn't working to print the current year.
 
-char *itoa(unsigned int x, char *s, size_t sz) {
-    // TODO: this is bad code we need some error handling here
-    if (sz < 20) {
-        extern void panic(const char *);
-        panic("ITOA BUFFER TOO SMALL");
-    }
-
-    unsigned int tmp;
+char *itoa(int x, char *s, int base) {
+    int tmp;
     int i, j;
 
     tmp = x;
     i = 0;
 
     do {
-        tmp = x % 10;
-        s[i++] = (tmp < 10) ? (tmp + '0') : (tmp + 'a' - 10);
-    } while (x /= 10);
+        tmp = x % base;
+        s[i++] = (tmp < 10) ? (tmp + '0') : (tmp - 10 + 'A');
+    } while (x /= base);
     s[i--] = 0;
 
     for (j = 0; j < i; j++, i--) {

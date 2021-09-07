@@ -81,7 +81,7 @@ int printf(const char* restrict format, ...) {
 				return -1;
 			}
 			char text[ITOA_SIZE];
-			itoa(n, text, ITOA_SIZE);
+			itoa(n, text, 10);
 			int len = strlen(text);
 
 			if (width - len > 0) {
@@ -111,6 +111,91 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
+		} else if ((*format == 'x') ||
+				   ((*(format + 1) == 'x') && isdigit(*format)) ||
+				   ((*(format + 2) == 'x') && isdigit(*(format + 1)))) {
+			char padding = ' ';
+			char width = 0;
+
+			if (*(format + 2) == 'x') {
+				padding = *format;
+				format++;
+				width = (*format) - '0';
+				format++;
+			} else if (*(format + 1) == 'x') {
+				width = (*format) - '0';
+				format++;
+			}
+
+			format++; // skip the 'd'
+			int n = (int)va_arg(parameters, int);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			char text[ITOA_SIZE];
+			itoa(n, text, 16);
+			strlwr(text);
+			int len = strlen(text);
+
+			if (width - len > 0) {
+				int remainder = width - len;
+				for (int n = 0; n < remainder; n++) {
+					putchar(padding);
+				}
+			}
+
+			if (!print(text, len)) {
+				return -1;
+			}
+
+			if (len > width) {
+				written += len;
+			} else {
+				written += width;
+			}
+		} else if ((*format == 'X') ||
+				   ((*(format + 1) == 'X') && isdigit(*format)) ||
+				   ((*(format + 2) == 'X') && isdigit(*(format + 1)))) {
+			char padding = ' ';
+			char width = 0;
+
+			if (*(format + 2) == 'X') {
+				padding = *format;
+				format++;
+				width = (*format) - '0';
+				format++;
+			} else if (*(format + 1) == 'X') {
+				width = (*format) - '0';
+				format++;
+			}
+
+			format++; // skip the 'd'
+			int n = (int)va_arg(parameters, int);
+			if (!maxrem) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			char text[ITOA_SIZE];
+			itoa(n, text, 16);
+			int len = strlen(text);
+
+			if (width - len > 0) {
+				int remainder = width - len;
+				for (int n = 0; n < remainder; n++) {
+					putchar(padding);
+				}
+			}
+
+			if (!print(text, len)) {
+				return -1;
+			}
+
+			if (len > width) {
+				written += len;
+			} else {
+				written += width;
+			}
 		} else {
 			format = format_begun_at;
 			size_t len = strlen(format);

@@ -8,7 +8,8 @@
 extern "C" {
 #endif
 
-char *itoa(unsigned int x, char *s, size_t sz);
+int atoi(const char* str, int base);
+char *itoa(int x, char *s, int base);
 
 __attribute__((__noreturn__))
 void abort(void);

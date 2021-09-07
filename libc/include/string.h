@@ -37,6 +37,8 @@ size_t strlcat(char *dst, const char *src, size_t size);
 size_t strlcpy(char *dst, const char *src, size_t n);
 size_t strlen(const char*);
 
+char* strlwr(char* s);
+
 /**
  * Returns the length of the initial portion of str1 which consists only of characters that are part of str2.
  */
@@ -58,6 +60,8 @@ char *strstr(const char *haystack, const char *needle);
 		// s = "abc\0=-def\0"
 */
 char* strtok(char* s, const char* delim);
+
+char* strupr(char* s);
 
 #ifdef __cplusplus
 }

@@ -149,7 +149,7 @@ bool read_integer(char** textPtr, int* result) {
     while (isdigit(*end) && (*end != 0)) {
         end++;
     }
-    *result = atoi(start);
+    *result = atoi(start, 10);
     *textPtr = end;
     return true;
 }
